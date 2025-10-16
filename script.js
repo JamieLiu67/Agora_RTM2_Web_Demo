@@ -31,6 +31,10 @@ const userListArea = document.getElementById('userList');
 const targetUserInput = document.getElementById('targetUserInput');
 const logArea = document.getElementById('logArea');
 
+// 查询用户在线相关
+const queryUserInput = document.getElementById('queryUserInput');
+const queryUserOnlineBtn = document.getElementById('queryUserOnlineBtn');
+
 // 呼叫邀请相关变量
 const callUserInput = document.getElementById('callUserInput');
 const sendCallInviteBtn = document.getElementById('sendCallInviteBtn');
@@ -193,6 +197,13 @@ loginBtn.onclick = async () => {
         rtm.addEventListener('message', event => {
             let msgObj = null;
             try { msgObj = JSON.parse(event.message); } catch {}
+            // 查询在线消息处理
+            if (msgObj && msgObj.type === 'query-online') {
+                if (event.publisher !== currentUserId) {
+                    addLog(`${event.publisher} 查询了您的用户在线状态`);
+                }
+                return;
+            }
             if (msgObj && msgObj.type === 'call-invite') {
                 // 被叫方收到呼叫邀请
                 if (event.publisher !== currentUserId) {
@@ -245,6 +256,8 @@ loginBtn.onclick = async () => {
     sendChannelMsgBtn.disabled = true;
     callUserInput.disabled = false;
     sendCallInviteBtn.disabled = false;
+    queryUserInput.disabled = false;
+    queryUserOnlineBtn.disabled = false;
     addLog('RTM 登录成功');
     } catch (e) {
         showStatus('RTM 登录失败: ' + e.message, 'disconnected');
@@ -270,6 +283,8 @@ logoutBtn.onclick = async () => {
     sendChannelMsgBtn.disabled = true;
     callUserInput.disabled = true;
     sendCallInviteBtn.disabled = true;
+    queryUserInput.disabled = true;
+    queryUserOnlineBtn.disabled = true;
     addLog('已登出 RTM');
         showStatus('已登出', 'disconnected');
         updateUserList([]);
@@ -409,6 +424,17 @@ function showCallerWaitingDialog(targetId) {
 }
 };
 
+queryUserOnlineBtn.onclick = async () => {
+    const targetId = queryUserInput.value.trim();
+    if (!targetId || !rtm) return;
+    try {
+        const queryMsg = JSON.stringify({ type: 'query-online', from: currentUserId, to: targetId, ts: Date.now() });
+        await rtm.publish(targetId, queryMsg, { channelType: 'USER' });
+        addLog(`查询成功，对方在线：${targetId}`);
+    } catch (e) {
+        addLog(`查询失败，对方不在线：${targetId}`);
+    }
+};
 
 messageInput.addEventListener('input', () => {
     sendP2PBtn.disabled = !messageInput.value.trim() || !targetUserInput.value.trim();
