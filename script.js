@@ -234,6 +234,15 @@ loginBtn.onclick = async () => {
             addLog(`收到消息: ${event.publisher}: ${event.message}`);
         });
         rtm.addEventListener('presence', event => {
+            // 只处理频道相关的 presence 事件
+            if (event.channelType === 'MESSAGE' && event.channelName === currentChannel) {
+                if (event.eventType === 'JOIN') {
+                    addLog(`频道用户进入：${event.publisher} 加入频道 [${event.channelName}]`);
+                } else if (event.eventType === 'LEAVE') {
+                    addLog(`频道用户离开：${event.publisher} 离开频道 [${event.channelName}]`);
+                }
+            }
+            // 其他 presence 事件也可按需打印
             addLog(`Presence: ${event.publisher} ${event.eventType}`);
         });
         rtm.addEventListener('status', event => {
