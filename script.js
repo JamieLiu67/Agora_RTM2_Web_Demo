@@ -31,6 +31,14 @@ const userListArea = document.getElementById('userList');
 const targetUserInput = document.getElementById('targetUserInput');
 const logArea = document.getElementById('logArea');
 
+// 呼叫邀请相关变量
+const callUserInput = document.getElementById('callUserInput');
+const sendCallInviteBtn = document.getElementById('sendCallInviteBtn');
+let callInviteTimer = null;
+let callInviteDialog = null;
+let callInviteAudio = null;
+let callInviteState = null; // 'calling', 'waiting', 'accepted', 'denied'
+
 function showStatus(msg, type = 'connected') {
     statusArea.innerHTML = `<div class="status status-${type}">${msg}</div>`;
     addLog(msg);
@@ -71,6 +79,104 @@ function updateUserList(users) {
     });
 }
 
+// 音频播放工具
+function playAudio(src) {
+    if (callInviteAudio) {
+        callInviteAudio.pause();
+        callInviteAudio.currentTime = 0;
+    }
+    if (src) {
+        callInviteAudio = new Audio(src);
+        callInviteAudio.play();
+    }
+}
+
+// 呼叫邀请弹窗
+function showCallInviteDialog(fromUser) {
+    closeCallInviteDialog();
+    // 高斯模糊背景
+    const blurBg = document.createElement('div');
+    blurBg.style.position = 'fixed';
+    blurBg.style.left = '0';
+    blurBg.style.top = '0';
+    blurBg.style.width = '100vw';
+    blurBg.style.height = '100vh';
+    blurBg.style.background = 'rgba(0,0,0,0.2)';
+    blurBg.style.backdropFilter = 'blur(8px)';
+    blurBg.style.zIndex = '9998';
+    blurBg.id = 'callInviteBlurBg';
+    document.body.appendChild(blurBg);
+    callInviteDialog = document.createElement('div');
+    callInviteDialog.style.position = 'fixed';
+    callInviteDialog.style.left = '50%';
+    callInviteDialog.style.top = '30%';
+    callInviteDialog.style.transform = 'translate(-50%, -50%)';
+    callInviteDialog.style.background = '#fff';
+    callInviteDialog.style.border = '2px solid #764ba2';
+    callInviteDialog.style.borderRadius = '12px';
+    callInviteDialog.style.boxShadow = '0 4px 20px rgba(0,0,0,0.2)';
+    callInviteDialog.style.padding = '32px 24px';
+    callInviteDialog.style.zIndex = '9999';
+    callInviteDialog.innerHTML = `<div style=\"font-size:1.2rem;margin-bottom:16px;\">收到来自 <b>${fromUser}</b> 的呼叫邀请</div>`;
+    // 倒计时
+    const countdown = document.createElement('div');
+    countdown.style.fontSize = '1rem';
+    countdown.style.marginBottom = '16px';
+    let timeLeft = 10;
+    countdown.textContent = `剩余响应时间：${timeLeft}s`;
+    callInviteDialog.appendChild(countdown);
+    const timer = setInterval(() => {
+        timeLeft--;
+        countdown.textContent = `剩余响应时间：${timeLeft}s`;
+        if (timeLeft <= 0) clearInterval(timer);
+    }, 1000);
+    // 按钮
+    const btnAccept = document.createElement('button');
+    btnAccept.className = 'btn btn-success';
+    btnAccept.textContent = '接收';
+    btnAccept.onclick = async () => {
+        playAudio('music/accept.mp3');
+        addLog('已接收呼叫邀请');
+        const replyMsg = JSON.stringify({ type: 'call-accept', from: currentUserId, to: fromUser, ts: Date.now() });
+        await rtm.publish(fromUser, replyMsg, { channelType: 'USER' });
+        closeCallInviteDialog();
+    };
+    const btnDeny = document.createElement('button');
+    btnDeny.className = 'btn btn-danger';
+    btnDeny.textContent = '拒绝';
+    btnDeny.style.marginLeft = '16px';
+    btnDeny.onclick = async () => {
+        playAudio('music/deny.mp3');
+        addLog('已拒绝呼叫邀请');
+        const replyMsg = JSON.stringify({ type: 'call-deny', from: currentUserId, to: fromUser, ts: Date.now() });
+        await rtm.publish(fromUser, replyMsg, { channelType: 'USER' });
+        closeCallInviteDialog();
+    };
+    callInviteDialog.appendChild(btnAccept);
+    callInviteDialog.appendChild(btnDeny);
+    document.body.appendChild(callInviteDialog);
+    // 10s倒计时关闭弹窗
+    if (callInviteTimer) clearTimeout(callInviteTimer);
+    callInviteTimer = setTimeout(() => {
+        addLog('未能及时处理呼叫邀请，弹窗自动关闭');
+        playAudio(''); // 停止播放 becalled.mp3
+        closeCallInviteDialog();
+    }, 10000);
+}
+
+function closeCallInviteDialog() {
+    if (callInviteDialog) {
+        document.body.removeChild(callInviteDialog);
+        callInviteDialog = null;
+    }
+    const blurBg = document.getElementById('callInviteBlurBg');
+    if (blurBg) document.body.removeChild(blurBg);
+    if (callInviteTimer) {
+        clearTimeout(callInviteTimer);
+        callInviteTimer = null;
+    }
+}
+
 loginBtn.onclick = async () => {
     const appId = appIdInput.value.trim();
     const userId = userIdInput.value.trim();
@@ -85,7 +191,33 @@ loginBtn.onclick = async () => {
         rtm = new RTM(appId, userId);
         // 事件监听
         rtm.addEventListener('message', event => {
-            // 如果是自己发的消息，已在本地展示过，不再重复展示
+            let msgObj = null;
+            try { msgObj = JSON.parse(event.message); } catch {}
+            if (msgObj && msgObj.type === 'call-invite') {
+                // 被叫方收到呼叫邀请
+                if (event.publisher !== currentUserId) {
+                    playAudio('music/becalled.mp3');
+                    showCallInviteDialog(msgObj.from);
+                    addLog(`收到来自 ${msgObj.from} 的呼叫邀请`);
+                }
+                return;
+            }
+            if (msgObj && (msgObj.type === 'call-accept' || msgObj.type === 'call-deny')) {
+                // 主叫方收到接收/拒绝回复
+                if (event.publisher !== currentUserId) {
+                    playAudio(msgObj.type === 'call-accept' ? 'music/accept.mp3' : 'music/deny.mp3');
+                    if (msgObj.type === 'call-accept') {
+                        addLog(`呼叫方收到 ${event.publisher} 的确认：对方已接受通话邀请`);
+                    } else if (msgObj.type === 'call-deny') {
+                        addLog(`呼叫方收到 ${event.publisher} 的确认：对方已拒绝通话邀请`);
+                    }
+                    if (callInviteTimer) clearTimeout(callInviteTimer);
+                    callInviteState = null;
+                    closeCallInviteDialog();
+                }
+                return;
+            }
+            // 普通消息
             if (event.publisher === currentUserId) return;
             addMessage(event.message, 'received', new Date(), event.publisher);
             addLog(`收到消息: ${event.publisher}: ${event.message}`);
@@ -111,6 +243,8 @@ loginBtn.onclick = async () => {
         sendP2PBtn.disabled = false;
     channelMsgInput.disabled = true;
     sendChannelMsgBtn.disabled = true;
+    callUserInput.disabled = false;
+    sendCallInviteBtn.disabled = false;
     addLog('RTM 登录成功');
     } catch (e) {
         showStatus('RTM 登录失败: ' + e.message, 'disconnected');
@@ -134,6 +268,8 @@ logoutBtn.onclick = async () => {
         sendP2PBtn.disabled = true;
     channelMsgInput.disabled = true;
     sendChannelMsgBtn.disabled = true;
+    callUserInput.disabled = true;
+    sendCallInviteBtn.disabled = true;
     addLog('已登出 RTM');
         showStatus('已登出', 'disconnected');
         updateUserList([]);
@@ -205,6 +341,72 @@ sendChannelMsgBtn.onclick = async () => {
     } catch (e) {
         addLog('频道消息发送失败: ' + (e.message || e));
     }
+};
+
+sendCallInviteBtn.onclick = async () => {
+    const targetId = callUserInput.value.trim();
+    if (!targetId || !rtm) return;
+    try {
+        // 发送自定义呼叫邀请消息
+        const inviteMsg = JSON.stringify({ type: 'call-invite', from: currentUserId, to: targetId, ts: Date.now() });
+        await rtm.publish(targetId, inviteMsg, { channelType: 'USER' });
+        addLog(`已向 ${targetId} 发送呼叫邀请`);
+        playAudio('music/calling.mp3');
+        callInviteState = 'calling';
+        showCallerWaitingDialog(targetId);
+    } catch (e) {
+        addLog('呼叫邀请发送失败: ' + (e.message || e));
+    }
+
+// 呼叫方等待弹窗
+function showCallerWaitingDialog(targetId) {
+    closeCallInviteDialog();
+    // 高斯模糊背景
+    const blurBg = document.createElement('div');
+    blurBg.style.position = 'fixed';
+    blurBg.style.left = '0';
+    blurBg.style.top = '0';
+    blurBg.style.width = '100vw';
+    blurBg.style.height = '100vh';
+    blurBg.style.background = 'rgba(0,0,0,0.2)';
+    blurBg.style.backdropFilter = 'blur(8px)';
+    blurBg.style.zIndex = '9998';
+    blurBg.id = 'callInviteBlurBg';
+    document.body.appendChild(blurBg);
+    callInviteDialog = document.createElement('div');
+    callInviteDialog.style.position = 'fixed';
+    callInviteDialog.style.left = '50%';
+    callInviteDialog.style.top = '30%';
+    callInviteDialog.style.transform = 'translate(-50%, -50%)';
+    callInviteDialog.style.background = '#fff';
+    callInviteDialog.style.border = '2px solid #764ba2';
+    callInviteDialog.style.borderRadius = '12px';
+    callInviteDialog.style.boxShadow = '0 4px 20px rgba(0,0,0,0.2)';
+    callInviteDialog.style.padding = '32px 24px';
+    callInviteDialog.style.zIndex = '9999';
+    callInviteDialog.innerHTML = `<div style=\"font-size:1.2rem;margin-bottom:16px;\">呼叫中 <b>${targetId}</b></div>`;
+    // 倒计时
+    const countdown = document.createElement('div');
+    countdown.style.fontSize = '1rem';
+    countdown.style.marginBottom = '16px';
+    let timeLeft = 10;
+    countdown.textContent = `等待对方响应：${timeLeft}s`;
+    callInviteDialog.appendChild(countdown);
+    const timer = setInterval(() => {
+        timeLeft--;
+        countdown.textContent = `等待对方响应：${timeLeft}s`;
+        if (timeLeft <= 0) clearInterval(timer);
+    }, 1000);
+    document.body.appendChild(callInviteDialog);
+    // 10s超时关闭弹窗
+    if (callInviteTimer) clearTimeout(callInviteTimer);
+    callInviteTimer = setTimeout(() => {
+        addLog('呼叫方未收到对方回复，超时结束');
+        playAudio('');
+        callInviteState = null;
+        closeCallInviteDialog();
+    }, 10000);
+}
 };
 
 
