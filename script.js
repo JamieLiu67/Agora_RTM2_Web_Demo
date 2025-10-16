@@ -1,10 +1,18 @@
-// Agora RTM 2.x Web Demo
 
+// ===============================
+// Agora RTM 2.x Web Demo 示例
+// 适合 RTM 初学者快速上手、参考学习
+// ===============================
+
+
+// RTM 实例、当前用户、当前频道、频道用户列表
 let rtm = null;
 let currentUserId = '';
 let currentChannel = '';
 let userList = [];
 
+
+// 页面元素获取
 const appIdInput = document.getElementById('appIdInput');
 const userIdInput = document.getElementById('userIdInput');
 const channelInput = document.getElementById('channelInput');
@@ -31,23 +39,29 @@ const userListArea = document.getElementById('userList');
 const targetUserInput = document.getElementById('targetUserInput');
 const logArea = document.getElementById('logArea');
 
-// 查询用户在线相关
+
+// 查询用户在线相关元素
 const queryUserInput = document.getElementById('queryUserInput');
 const queryUserOnlineBtn = document.getElementById('queryUserOnlineBtn');
+
 
 // 呼叫邀请相关变量
 const callUserInput = document.getElementById('callUserInput');
 const sendCallInviteBtn = document.getElementById('sendCallInviteBtn');
-let callInviteTimer = null;
-let callInviteDialog = null;
-let callInviteAudio = null;
-let callInviteState = null; // 'calling', 'waiting', 'accepted', 'denied'
+let callInviteTimer = null;      // 呼叫邀请弹窗倒计时定时器
+let callInviteDialog = null;     // 呼叫邀请弹窗 DOM
+let callInviteAudio = null;      // 呼叫邀请音效播放器
+let callInviteState = null;      // 呼叫邀请状态 'calling', 'waiting', 'accepted', 'denied'
 
+
+// 状态区展示和日志打印
 function showStatus(msg, type = 'connected') {
     statusArea.innerHTML = `<div class="status status-${type}">${msg}</div>`;
     addLog(msg);
 }
 
+
+// 消息区展示（频道/点对点消息）
 function addMessage(content, type = 'received', time = new Date(), user = '') {
     // 只展示本地发送和远端接收的消息
     const msgDiv = document.createElement('div');
@@ -57,6 +71,8 @@ function addMessage(content, type = 'received', time = new Date(), user = '') {
     messageArea.scrollTop = messageArea.scrollHeight;
 }
 
+
+// 日志区打印
 function addLog(log) {
     const logDiv = document.createElement('div');
     logDiv.textContent = `[${new Date().toLocaleTimeString()}] ${log}`;
@@ -64,13 +80,15 @@ function addLog(log) {
     logArea.scrollTop = logArea.scrollHeight;
 }
 
+
+// 刷新频道用户列表
 function updateUserList(users) {
     userListArea.innerHTML = '';
     if (!users || users.length === 0) {
         userListArea.innerHTML = '<div class="user-item"><span>当前没有用户在线</span></div>';
         return;
     }
-        const selfId = document.getElementById('userIdInput').value.trim();
+    const selfId = document.getElementById('userIdInput').value.trim();
     users.forEach(u => {
         const div = document.createElement('div');
         div.className = 'user-item';
@@ -83,7 +101,8 @@ function updateUserList(users) {
     });
 }
 
-// 音频播放工具
+
+// 音频播放工具（呼叫邀请相关）
 function playAudio(src) {
     if (callInviteAudio) {
         callInviteAudio.pause();
@@ -95,7 +114,7 @@ function playAudio(src) {
     }
 }
 
-// 呼叫邀请弹窗
+// 呼叫邀请弹窗（被叫方）
 function showCallInviteDialog(fromUser) {
     closeCallInviteDialog();
     // 高斯模糊背景
@@ -168,6 +187,7 @@ function showCallInviteDialog(fromUser) {
     }, 10000);
 }
 
+// 关闭呼叫邀请弹窗
 function closeCallInviteDialog() {
     if (callInviteDialog) {
         document.body.removeChild(callInviteDialog);
@@ -181,6 +201,7 @@ function closeCallInviteDialog() {
     }
 }
 
+// RTM 登录按钮事件
 loginBtn.onclick = async () => {
     const appId = appIdInput.value.trim();
     const userId = userIdInput.value.trim();
@@ -194,7 +215,8 @@ loginBtn.onclick = async () => {
         const { RTM } = AgoraRTM;
         rtm = new RTM(appId, userId);
         // 事件监听
-        rtm.addEventListener('message', event => {
+    // 消息事件监听（频道消息、点对点消息、呼叫邀请、查询在线等）
+    rtm.addEventListener('message', event => {
             let msgObj = null;
             try { msgObj = JSON.parse(event.message); } catch {}
             // 查询在线消息处理
@@ -233,7 +255,8 @@ loginBtn.onclick = async () => {
             addMessage(event.message, 'received', new Date(), event.publisher);
             addLog(`收到消息: ${event.publisher}: ${event.message}`);
         });
-        rtm.addEventListener('presence', event => {
+    // 频道用户进出监听（Presence），JOIN/LEAVE 事件日志输出
+    rtm.addEventListener('presence', event => {
             // 只处理频道相关的 presence 事件
             if (event.channelType === 'MESSAGE' && event.channelName === currentChannel) {
                 if (event.eventType === 'JOIN') {
@@ -245,7 +268,8 @@ loginBtn.onclick = async () => {
             // 其他 presence 事件也可按需打印
             addLog(`Presence: ${event.publisher} ${event.eventType}`);
         });
-        rtm.addEventListener('status', event => {
+    // RTM 连接状态变化监听
+    rtm.addEventListener('status', event => {
             showStatus('状态变化: ' + event.state, event.state === 'CONNECTED' ? 'connected' : 'disconnected');
             addLog('状态事件: ' + JSON.stringify(event));
         });
@@ -274,6 +298,7 @@ loginBtn.onclick = async () => {
     }
 };
 
+// RTM 登出按钮事件
 logoutBtn.onclick = async () => {
     if (rtm) {
         await rtm.logout();
@@ -300,6 +325,7 @@ logoutBtn.onclick = async () => {
     }
 };
 
+// 订阅频道按钮事件
 subscribeBtn.onclick = async () => {
     const channelName = channelInput.value.trim();
     if (!channelName) {
@@ -321,6 +347,7 @@ subscribeBtn.onclick = async () => {
     }
 };
 
+// 取消订阅频道按钮事件
 unsubscribeBtn.onclick = async () => {
     if (rtm && currentChannel) {
         await rtm.unsubscribe(currentChannel);
@@ -337,6 +364,7 @@ unsubscribeBtn.onclick = async () => {
     }
 };
 
+// 发送点对点消息按钮事件
 sendP2PBtn.onclick = async () => {
     const msg = messageInput.value.trim();
     const targetId = targetUserInput.value.trim();
@@ -352,6 +380,7 @@ sendP2PBtn.onclick = async () => {
         addLog('点对点消息发送失败: ' + (e.message || e));
     }
 };
+// 发送频道消息按钮事件
 sendChannelMsgBtn.onclick = async () => {
     const msg = channelMsgInput.value.trim();
     if (!msg || !currentChannel || !rtm) return;
@@ -367,6 +396,7 @@ sendChannelMsgBtn.onclick = async () => {
     }
 };
 
+// 发送呼叫邀请按钮事件
 sendCallInviteBtn.onclick = async () => {
     const targetId = callUserInput.value.trim();
     if (!targetId || !rtm) return;
@@ -383,6 +413,7 @@ sendCallInviteBtn.onclick = async () => {
     }
 
 // 呼叫方等待弹窗
+// 呼叫方等待弹窗（主叫方）
 function showCallerWaitingDialog(targetId) {
     closeCallInviteDialog();
     // 高斯模糊背景
