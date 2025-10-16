@@ -464,6 +464,14 @@ function showCallerWaitingDialog(targetId) {
 }
 };
 
+
+// ===============================
+// 查询指定用户是否在线功能说明：
+// RTM SDK 没有直接查询某个用户是否在线的接口，
+// 只能通过发送点对点消息（publish）给目标用户，
+// 若发送成功则说明对方在线，失败则说明不在线。
+// 远端收到查询消息也会在日志区提示。
+// ===============================
 queryUserOnlineBtn.onclick = async () => {
     const targetId = queryUserInput.value.trim();
     if (!targetId || !rtm) return;
@@ -487,6 +495,12 @@ channelMsgInput.addEventListener('input', () => {
 targetUserInput.addEventListener('input', () => {
     sendP2PBtn.disabled = !messageInput.value.trim() || !targetUserInput.value.trim();
 });
+
+// ===============================
+// 刷新频道用户列表说明：
+// whoNow 只能查询当前已订阅频道内的用户在线状态，
+// 频道外的用户无法查询（即只能看到已加入频道的用户）。
+// ===============================
 const refreshUserListBtn = document.getElementById('refreshUserListBtn');
 refreshUserListBtn.onclick = async () => {
     if (!currentChannel) {
