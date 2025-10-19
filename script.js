@@ -17,6 +17,30 @@ const appIdInput = document.getElementById('appIdInput');
 const userIdInput = document.getElementById('userIdInput');
 const channelInput = document.getElementById('channelInput');
 const tokenInput = document.getElementById('tokenInput');
+
+// 控制需登录后显示的功能区显示/隐藏
+function setRTMFeatureVisible(visible, transitionDuration = 300) {
+    // 使用CSS类切换而不是直接修改style，更好的性能和可维护性
+    document.querySelectorAll('.rtm-feature').forEach(el => {
+        if (visible) {
+            // 先设置display，然后添加淡入效果
+            el.style.display = '';
+            el.style.opacity = '0';
+            // 强制回流
+            void el.offsetWidth;
+            el.style.transition = `opacity ${transitionDuration}ms ease`;
+            el.style.opacity = '1';
+        } else {
+            // 淡出然后隐藏
+            el.style.opacity = '0';
+            setTimeout(() => {
+                el.style.display = 'none';
+            }, transitionDuration);
+        }
+    });
+}
+// 初始化时立即隐藏，不使用动画
+document.querySelectorAll('.rtm-feature').forEach(el => el.style.display = 'none');
 const loginBtn = document.getElementById('loginBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const subscribeBtn = document.getElementById('subscribeBtn');
@@ -110,7 +134,41 @@ function playAudio(src) {
     }
     if (src) {
         callInviteAudio = new Audio(src);
-        callInviteAudio.play();
+        // 处理浏览器自动播放限制问题
+        const playPromise = callInviteAudio.play();
+        
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                // 播放成功
+                console.log('音频播放成功');
+            }).catch(error => {
+                // 自动播放被阻止，提供用户交互提示
+                console.warn('音频自动播放被阻止，需要用户交互: ', error);
+                // 可以在此添加视觉提示，提醒用户点击页面以允许音频
+                const audioAlert = document.createElement('div');
+                audioAlert.style.position = 'fixed';
+                audioAlert.style.bottom = '20px';
+                audioAlert.style.left = '50%';
+                audioAlert.style.transform = 'translateX(-50%)';
+                audioAlert.style.background = 'rgba(0,0,0,0.7)';
+                audioAlert.style.color = 'white';
+                audioAlert.style.padding = '10px 20px';
+                audioAlert.style.borderRadius = '5px';
+                audioAlert.style.zIndex = '9999';
+                audioAlert.style.cursor = 'pointer';
+                audioAlert.textContent = '点击此处允许音频播放';
+                audioAlert.onclick = () => {
+                    callInviteAudio.play();
+                    document.body.removeChild(audioAlert);
+                };
+                document.body.appendChild(audioAlert);
+                setTimeout(() => {
+                    if (document.body.contains(audioAlert)) {
+                        document.body.removeChild(audioAlert);
+                    }
+                }, 5000);
+            });
+        }
     }
 }
 
@@ -277,6 +335,7 @@ loginBtn.onclick = async () => {
         await rtm.login({ token });
         currentUserId = userId;
         showStatus('RTM 登录成功', 'connected');
+        setRTMFeatureVisible(true);
         loginBtn.disabled = true;
         logoutBtn.disabled = false;
         subscribeBtn.disabled = false;
@@ -322,6 +381,7 @@ logoutBtn.onclick = async () => {
     addLog('已登出 RTM');
         showStatus('已登出', 'disconnected');
         updateUserList([]);
+        setRTMFeatureVisible(false);
     }
 };
 
@@ -412,7 +472,6 @@ sendCallInviteBtn.onclick = async () => {
         addLog('呼叫邀请发送失败: ' + (e.message || e));
     }
 
-// 呼叫方等待弹窗
 // 呼叫方等待弹窗（主叫方）
 function showCallerWaitingDialog(targetId) {
     closeCallInviteDialog();
