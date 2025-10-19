@@ -147,7 +147,8 @@ function playAudio(src) {
                 // 可以在此添加视觉提示，提醒用户点击页面以允许音频
                 const audioAlert = document.createElement('div');
                 audioAlert.style.position = 'fixed';
-                audioAlert.style.bottom = '20px';
+                // 计算位置：位于呼叫弹窗下方
+                audioAlert.style.top = '45%'; // 呼叫弹窗在30%，适当下移
                 audioAlert.style.left = '50%';
                 audioAlert.style.transform = 'translateX(-50%)';
                 audioAlert.style.background = 'rgba(0,0,0,0.7)';
@@ -156,7 +157,8 @@ function playAudio(src) {
                 audioAlert.style.borderRadius = '5px';
                 audioAlert.style.zIndex = '9999';
                 audioAlert.style.cursor = 'pointer';
-                audioAlert.textContent = '点击此处允许音频播放';
+                audioAlert.style.boxShadow = '0 3px 10px rgba(0,0,0,0.3)';
+                audioAlert.textContent = '👆 点击此处允许音频播放';
                 audioAlert.onclick = () => {
                     callInviteAudio.play();
                     document.body.removeChild(audioAlert);
