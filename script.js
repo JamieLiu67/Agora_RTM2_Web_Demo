@@ -328,9 +328,18 @@ loginBtn.onclick = async () => {
             addLog(`Presence: ${event.publisher} ${event.eventType}`);
         });
     // RTM 连接状态变化监听
-    rtm.addEventListener('status', event => {
-            showStatus('状态变化: ' + event.state, event.state === 'CONNECTED' ? 'connected' : 'disconnected');
-            addLog('状态事件: ' + JSON.stringify(event));
+    rtm.addEventListener('linkState', event => {
+        const currentState = event.currentState;
+        const previousState = event.previousState;
+        const serviceType = event.serviceType;
+        const operation = event.operation;
+        const reason = event.reason;
+        const affectedChannels = event.affectedChannels;
+        const timestamp = event.timestamp;
+        const isResumed = event.isResumed;
+        
+        showStatus('连接状态变化: ' + currentState, currentState === 'CONNECTED' ? 'connected' : 'disconnected');
+        addLog(`LinkState事件: 当前状态=${currentState}, 之前状态=${previousState}, 服务类型=${serviceType}, 操作=${operation}, 原因=${reason}`);
         });
         // 登录
         await rtm.login({ token });
@@ -351,7 +360,6 @@ loginBtn.onclick = async () => {
     sendCallInviteBtn.disabled = false;
     queryUserInput.disabled = false;
     queryUserOnlineBtn.disabled = false;
-    addLog('RTM 登录成功');
     } catch (e) {
         showStatus('RTM 登录失败: ' + e.message, 'disconnected');
         addLog('RTM 登录失败: ' + e.message);
