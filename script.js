@@ -348,7 +348,7 @@ loginBtn.onclick = async () => {
         
         // Token 即将过期事件监听
         rtm.addEventListener('tokenPrivilegeWillExpire', async (channelName) => {
-            // 实际不会有 channelName 被传进来，，所以无需处理 channelName
+            // 只有 streamchannel 才有 channelName 返回，本 Demo 用不上
             showStatus(`⚠️ Token 即将过期，请及时更新！`, 'disconnected');
             addLog(`请输入新的Token并点击"更新Token"按钮`);
             
@@ -637,7 +637,7 @@ renewTokenBtn.onclick = async () => {
         } else {
             // 成功情况 - RenewTokenResponse 类型
             showStatus('Token 更新成功！', 'connected');
-            // 更新成功理论应该传一个时间戳回来，但实际不会，所以直接打印就行
+            // 当前版本更新成功后时间戳只会返回 0，等后续某个版本会开始返回准确时间戳，这里显不出来
             addLog(`Token 更新成功!`);
             
             // 重置高亮状态
