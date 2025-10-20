@@ -74,7 +74,7 @@
 - 频道用户列表为空：请先订阅频道并确保有用户在线。
 
 ## 参考文档
-- [Agora RTM Web SDK 2.x 官方文档](https://doc.agora.io/cn/Real-time-Messaging/web-2.x/index.html)
+- [Agora RTM Web SDK 2.x 官方文档](https://doc.shengwang.cn/doc/rtm2/javascript/landing-page)
 
 ---
 如需定制功能或遇到问题，欢迎反馈或二次开发！
