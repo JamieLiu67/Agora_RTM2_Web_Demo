@@ -68,6 +68,10 @@ const logArea = document.getElementById('logArea');
 const queryUserInput = document.getElementById('queryUserInput');
 const queryUserOnlineBtn = document.getElementById('queryUserOnlineBtn');
 
+// Token 更新相关元素
+const newTokenInput = document.getElementById('newTokenInput');
+const renewTokenBtn = document.getElementById('renewTokenBtn');
+
 
 // 呼叫邀请相关变量
 const callUserInput = document.getElementById('callUserInput');
@@ -341,6 +345,19 @@ loginBtn.onclick = async () => {
         showStatus('连接状态变化: ' + currentState, currentState === 'CONNECTED' ? 'connected' : 'disconnected');
         addLog(`LinkState事件: 当前状态=${currentState}, 之前状态=${previousState}, 服务类型=${serviceType}, 操作=${operation}, 原因=${reason}`);
         });
+        
+        // Token 即将过期事件监听
+        rtm.addEventListener('tokenPrivilegeWillExpire', async (channelName) => {
+            // 实际不会有 channelName 被传进来，，所以无需处理 channelName
+            showStatus(`⚠️ Token 即将过期，请及时更新！`, 'disconnected');
+            addLog(`请输入新的Token并点击"更新Token"按钮`);
+            
+            // 高亮显示token更新区域
+            newTokenInput.style.borderColor = '#ff9800';
+            renewTokenBtn.style.background = '#ff9800';
+            renewTokenBtn.style.animation = 'pulse 1s infinite';
+        });
+        
         // 登录
         await rtm.login({ token });
         currentUserId = userId;
@@ -360,6 +377,8 @@ loginBtn.onclick = async () => {
     sendCallInviteBtn.disabled = false;
     queryUserInput.disabled = false;
     queryUserOnlineBtn.disabled = false;
+    newTokenInput.disabled = false;
+    renewTokenBtn.disabled = false;
     } catch (e) {
         showStatus('RTM 登录失败: ' + e.message, 'disconnected');
         addLog('RTM 登录失败: ' + e.message);
@@ -387,6 +406,9 @@ logoutBtn.onclick = async () => {
     sendCallInviteBtn.disabled = true;
     queryUserInput.disabled = true;
     queryUserOnlineBtn.disabled = true;
+    newTokenInput.disabled = true;
+    renewTokenBtn.disabled = true;
+    newTokenInput.value = '';
     addLog('已登出 RTM');
         showStatus('已登出', 'disconnected');
         updateUserList([]);
@@ -590,5 +612,43 @@ refreshUserListBtn.onclick = async () => {
     } catch (e) {
         userListArea.innerHTML = '<div class="user-item"><span>获取频道用户失败: ' + (e.reason || e.message || e) + '</span></div>';
         addLog('获取频道用户失败: ' + (e.reason || e.message || e));
+    }
+};
+
+// 更新 Token 按钮事件
+renewTokenBtn.onclick = async () => {
+    const newToken = newTokenInput.value.trim();
+    if (!newToken || !rtm) {
+        showStatus('请输入新的 Token', 'disconnected');
+        return;
+    }
+    
+    try {
+        showStatus('正在更新 Token...', 'connected');
+        addLog('开始更新 Token...');
+        
+        const result = await rtm.renewToken(newToken);
+        
+        // 检查返回结果类型
+        if (result.error) {
+            // 错误情况 - ErrorInfo 类型
+            showStatus(`Token 更新失败: ${result.reason}`, 'disconnected');
+            addLog(`Token 更新失败: [${result.errorCode}] ${result.reason} (操作: ${result.operation})`);
+        } else {
+            // 成功情况 - RenewTokenResponse 类型
+            showStatus('Token 更新成功！', 'connected');
+            // 更新成功理论应该传一个时间戳回来，但实际不会，所以直接打印就行
+            addLog(`Token 更新成功!`);
+            
+            // 重置高亮状态
+            newTokenInput.style.borderColor = '';
+            renewTokenBtn.style.background = '';
+            renewTokenBtn.style.animation = '';
+            newTokenInput.value = '';
+        }
+        
+    } catch (e) {
+        showStatus('Token 更新异常: ' + e.message, 'disconnected');
+        addLog('Token 更新发生异常: ' + (e.message || e));
     }
 };
