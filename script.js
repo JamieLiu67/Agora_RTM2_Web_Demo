@@ -94,6 +94,11 @@ function addMessage(content, type = 'received', time = new Date(), user = '') {
     // 只展示本地发送和远端接收的消息
     const msgDiv = document.createElement('div');
     msgDiv.className = `message message-${type}`;
+    msgDiv.style.wordWrap = 'break-word';
+    msgDiv.style.wordBreak = 'break-all';
+    msgDiv.style.whiteSpace = 'pre-wrap';
+    msgDiv.style.overflowWrap = 'break-word';
+    msgDiv.style.maxWidth = '100%';
     msgDiv.innerHTML = `<div>${user ? `<b>${user}:</b> ` : ''}${content}</div><div class="message-time">${time.toLocaleTimeString()}</div>`;
     messageArea.appendChild(msgDiv);
     messageArea.scrollTop = messageArea.scrollHeight;
@@ -103,6 +108,11 @@ function addMessage(content, type = 'received', time = new Date(), user = '') {
 // 日志区打印
 function addLog(log) {
     const logDiv = document.createElement('div');
+    logDiv.style.wordWrap = 'break-word';
+    logDiv.style.wordBreak = 'break-all';
+    logDiv.style.whiteSpace = 'pre-wrap';
+    logDiv.style.overflowWrap = 'break-word';
+    logDiv.style.maxWidth = '100%';
     logDiv.textContent = `[${new Date().toLocaleTimeString()}] ${log}`;
     logArea.appendChild(logDiv);
     logArea.scrollTop = logArea.scrollHeight;

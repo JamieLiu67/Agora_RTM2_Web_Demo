@@ -140,13 +140,17 @@
         }
 
         .message-area {
-            height: 300px;
+            height: 350px;
             overflow-y: auto;
             border: 2px solid #e9ecef;
             border-radius: 6px;
             padding: 15px;
             background: white;
             margin-bottom: 15px;
+            word-wrap: break-word;
+            word-break: break-all;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
         }
 
         .message {
@@ -154,6 +158,11 @@
             padding: 10px;
             border-radius: 6px;
             position: relative;
+            word-wrap: break-word;
+            word-break: break-all;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            max-width: 100%;
         }
 
         .message-sent {
@@ -170,6 +179,8 @@
             background: #fff3e0;
             border-left: 4px solid #ff9800;
             font-style: italic;
+            word-break: normal;
+            white-space: normal;
         }
 
         .message-time {
@@ -376,15 +387,15 @@
                         style="float:right;padding:4px 12px;font-size:12px;">清空</button></h3>
                 <div id="messageArea" class="message-area">
                     <div class="message message-system">
-                        <div>欢迎使用 Agora RTM 2.x Demo！</div>
-                        <div class="message-time">请先登录 RTM</div>
+                        <div>🎉 欢迎使用 Agora RTM 2.x Demo！</div>
+                        <div class="message-time">请先登录 RTM 开始体验</div>
                     </div>
                 </div>
             </div>
             <div class="panel">
                 <h3>📄 日志 <button class="btn btn-warning" id="clearLogBtn"
                         style="float:right;padding:4px 12px;font-size:12px;">清空</button></h3>
-                <div id="logArea" class="message-area" style="height:400px;background:#f9f9f9;"></div>
+                <div id="logArea" class="message-area" style="background:#f9f9f9;"></div>
             </div>
             <div class="panel rtm-feature">
                 <h3>👥 频道用户列表 <button class="btn btn-primary" id="refreshUserListBtn"
