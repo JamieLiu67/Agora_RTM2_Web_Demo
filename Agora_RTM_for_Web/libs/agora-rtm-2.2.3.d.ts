@@ -1,5 +1,6 @@
 import EventEmitter from 'events';
 import { IDebugger } from 'debug';
+import { ConnectionState, ConnectionDisconnectedReason } from 'agora-rtc-sdk-ng';
 
 /** @zh-cn
  * 连接状态改变原因
@@ -7,153 +8,154 @@ import { IDebugger } from 'debug';
 /**
  * Reasons for a connection state change.
  */
-type ConnectionChangeReason = 'CONNECTING'
-/** @zh-cn
- * SDK 登录 Agora RTM 系统成功。
- */
-/**
- * The SDK has logged in the Agora RTM system.
- */
- | 'LOGIN_SUCCESS'
-/** @zh-cn
- * SDK 登录 Agora RTM 系统失败。
- */
-/**
- * The SDK fails to log in the Agora RTM system, because, for example, the token has expired.
- */
- | 'REJECTED_BY_SERVER'
-/** @zh-cn
- * SDK 无法登录 Agora RTM 系统超过 6 秒，停止登录。
- */
-/**
- * The login has timed out, and the SDK stops logging in. The current login timeout is set as six seconds.
- */
- | 'LOST'
-/** @zh-cn
- * SDK 与 Agora RTM 系统的连接被中断超过 4 秒。
- */
-/**
- * The connection between the SDK and the Agora RTM system is interrupted for more than four seconds.
- */
- | 'INTERRUPTED'
-/** @zh-cn
- * SDK 已登出 Agora RTM 系统。
- */
-/**
- * The SDK has logged out of the Agora RTM system.
- */
- | 'LOGOUT'
-/** @zh-cn
- * SDK 被服务器禁止登录 Agora RTM 系统。
- */
-/**
- * Login is banned by the Agora RTM server.
- */
-/** @zh-cn
- * 另一个用户正以相同的 uid 登陆 Agora RTM 系统。
- */
-/**
- * Another instance has logged in the Agora RTM system with the same uid.
- */
- | 'SAME_UID_LOGIN'
-/** @zh-cn
- * 用户使用的token已过期。
- */
-/**
- * The token used by the user has expired.
- */
- | 'TOKEN_EXPIRED'
-/**
- * @zh-cn
- * 服务暂不可用。
- */
-/**】
- * The presence server not ready.
- */
- | 'PRESENCE_NOT_READY';
+type RTMConnectionChangeReason = 'CONNECTING'
+    /** @zh-cn
+     * SDK 登录 Agora RTM 系统成功。
+     */
+    /**
+     * The SDK has logged in the Agora RTM system.
+     */
+    | 'LOGIN_SUCCESS'
+    /** @zh-cn
+     * SDK 登录 Agora RTM 系统失败。
+     */
+    /**
+     * The SDK fails to log in the Agora RTM system, because, for example, the token has expired.
+     */
+    | 'REJECTED_BY_SERVER'
+    /** @zh-cn
+     * SDK 无法登录 Agora RTM 系统超过 6 秒，停止登录。
+     */
+    /**
+     * The login has timed out, and the SDK stops logging in. The current login timeout is set as six seconds.
+     */
+    | 'LOST'
+    /** @zh-cn
+     * SDK 与 Agora RTM 系统的连接被中断超过 4 秒。
+     */
+    /**
+     * The connection between the SDK and the Agora RTM system is interrupted for more than four seconds.
+     */
+    | 'INTERRUPTED'
+    /** @zh-cn
+     * SDK 已登出 Agora RTM 系统。
+     */
+    /**
+     * The SDK has logged out of the Agora RTM system.
+     */
+    | 'LOGOUT'
+    /** @zh-cn
+     * SDK 被服务器禁止登录 Agora RTM 系统。
+     */
+    /**
+     * Login is banned by the Agora RTM server.
+     */
+    | 'KICKED_OUT_BY_SERVER'
+    /** @zh-cn
+     * 另一个用户正以相同的 uid 登陆 Agora RTM 系统。
+     */
+    /**
+     * Another instance has logged in the Agora RTM system with the same uid.
+     */
+    | 'SAME_UID_LOGIN'
+    /** @zh-cn
+     * 用户使用的token已过期。
+     */
+    /**
+     * The token used by the user has expired.
+     */
+    | 'TOKEN_EXPIRED'
+    /**
+     * @zh-cn
+     * 服务暂不可用。
+     */
+    /**】
+     * The presence server not ready.
+     */
+    | 'PRESENCE_NOT_READY';
 /** @zh-cn
  * SDK 与 Agora RTM 系统的连接状态类型
  */
 /**
  * Connection states between the SDK and the Agora RTM system.
  */
-type ConnectionState = 
-/** @zh-cn
- * 初始状态。SDK 未连接到 Agora RTM 系统。
- *
- * App 调用方法 {@link RTMClient.login} 时，SDK 开始登录 Agora RTM 系统，触发回调 {@link RTMEvents.status}，并切换到 {@link CONNECTING} 状态。
- *
- */
-/**
- * When the app calls the {@link RTMClient.login} method, the SDK logs in the Agora RTM system, triggers the {@link RTMEvents.status} callback, and switches to the {@link CONNECTING} state.
- */
-'DISCONNECTED'
-/** @zh-cn
- * SDK 正在登录 Agora RTM 系统。
- *
- * - 方法调用成功时，SDK 会触发回调 {@link RTMEvents.status}，并切换到 {@link CONNECTED} 状态。</li>
- * - 法调用失败，SDK 会触发回调 {@link RTMEvents.status}，并切换到 {@link DISCONNECTED} 状态。</li>
- *
- */
-/**
- * The SDK has logged in the Agora RTM system.
- * <ul>
- *     <li>Success = the SDK triggers the {@link RTMEvents.status} callback and switches to the {@link CONNECTED} state.</li,
- *     <li>Failure = the SDK triggers the {@link RTMEvents.status} callback and switches to the {@link DISCONNECTED} state.</li,
- * </ul>
- */
- | 'CONNECTING'
-/** @zh-cn
- * SDK 已登录 Agora RTM 系统。
- * <ul>
- *     <li>如果 SDK 与 Agora RTM 系统的连接由于网络问题中断，SDK 会触发回调 {@link RTMEvents.status}，并切换到 {@link RECONNECTING} 状态。</li>
- *     <li>如果 SDK 因为相同 ID 已在其他实例或设备中登录等原因被服务器禁止登录，会触发回调 {@link RTMEvents.status}，并切换到 {@link FAILED} 状态。</li>
- *     <li>如果 App 调用方法 {@link RTMClient.logout}，SDK 登出 Agora RTM 系统成功，会触发回调 {@link RTMEvents.status}，并切换到 {@link DISCONNECTED} 状态。</li>
- * </ul>
- */
-/**
- * The SDK has logged in the Agora RTM system.
- * <ul>
- *     <li>If the connection between the SDK and the Agora RTM system is interrupted because of network issues, the SDK triggers the {@link RTMEvents.status} callback and switches to the {@link RECONNECTING} state.</li>
- *     <li>If the login is banned by the server, for example, another instance has logged in with the same uid from a different device, the SDK triggers the {@link RTMEvents.status} callback and switches to the {@link FAILED} state.</li>
- *     <li>If the app calls the {@link RTMClient.logout} method and the SDK successfully logs out of the Agora RTM system, the SDK triggers the {@link RTMEvents.status} callback and switches to the {@link DISCONNECTED} state.</li>
- * </ul>
- */
- | 'RECONNECTING'
-/** @zh-cn
- * SDK 正在重新登录 Agora RTM 系统。
- *
- * <ul>
- *     <li>如果 SDK 重新登录 Agora RTM 系统成功，会触发回调 {@link RTMEvents.status}，并切换到 {@link CONNECTED} 状态。</li>
- *     <li>如果 SDK 重新登录 Agora RTM 系统失败，会保持  {@link RECONNECTING} 状态。</li>
- *     <li>如果登录被服务器拒绝，SDK 会触发回调 {@link RTMEvents.status}，并切换到 {@link FAILED} 状态。</li>
- * </ul>
- *
- */
-/**
- * The SDK keeps logging in the Agora RTM system.
- * <ul>
- *     <li>If the SDK successfully logs in the Agora RTM system again, it triggers the {@link  RTMEvents.status} callback and switches to the {@link CONNECTED} state.</li>
- *     <li>If the SDK fails to log in the Agora RTM system again, the SDK stays in the {@link RECONNECTING} state. </li>
- *     <li>If the login is rejected by the server, the SDK triggers the {@link  RTMEvents.status} callback and switches to the {@link FAILED} state.</li>
- * </ul>
- */
- | 'CONNECTED'
-/** @zh-cn
- * SDK 停止登录 Agora RTM 系统。
- *
- * <p>原因可能为：</p>
- * <p><ul>
- * <li>另一实例已经以同一用户 ID 登录 Agora RTM 系统。</li>
- * <li>token 已过期。</li></ul></p>
- * 请在调用方法 {@link RTMClient.logout} 后，调用方法 {@link RTMClient.login} 登录 Agora RTM 系统。</p>
- */
-/**
- * The SDK gives up logging in the Agora RTM system, possibly because another instance has logged in the Agora RTM system with the same uid.
- *
- * <p>Call the {@link RTMClient.logout} method before calling the {@link RTMClient.login} method to log in the Agora RTM system again.</p>
- */
- | 'FAILED';
+type RTMConnectionState =
+    /** @zh-cn
+     * 初始状态。SDK 未连接到 Agora RTM 系统。
+     *
+     * App 调用方法 {@link RTMClient.login} 时，SDK 开始登录 Agora RTM 系统，触发回调 {@link RTMEvents.status}，并切换到 {@link CONNECTING} 状态。
+     *
+     */
+    /**
+     * When the app calls the {@link RTMClient.login} method, the SDK logs in the Agora RTM system, triggers the {@link RTMEvents.status} callback, and switches to the {@link CONNECTING} state.
+     */
+    'DISCONNECTED'
+    /** @zh-cn
+     * SDK 正在登录 Agora RTM 系统。
+     *
+     * - 方法调用成功时，SDK 会触发回调 {@link RTMEvents.status}，并切换到 {@link CONNECTED} 状态。</li>
+     * - 法调用失败，SDK 会触发回调 {@link RTMEvents.status}，并切换到 {@link DISCONNECTED} 状态。</li>
+     *
+     */
+    /**
+     * The SDK has logged in the Agora RTM system.
+     * <ul>
+     *     <li>Success = the SDK triggers the {@link RTMEvents.status} callback and switches to the {@link CONNECTED} state.</li,
+     *     <li>Failure = the SDK triggers the {@link RTMEvents.status} callback and switches to the {@link DISCONNECTED} state.</li,
+     * </ul>
+     */
+    | 'CONNECTING'
+    /** @zh-cn
+     * SDK 已登录 Agora RTM 系统。
+     * <ul>
+     *     <li>如果 SDK 与 Agora RTM 系统的连接由于网络问题中断，SDK 会触发回调 {@link RTMEvents.status}，并切换到 {@link RECONNECTING} 状态。</li>
+     *     <li>如果 SDK 因为相同 ID 已在其他实例或设备中登录等原因被服务器禁止登录，会触发回调 {@link RTMEvents.status}，并切换到 {@link FAILED} 状态。</li>
+     *     <li>如果 App 调用方法 {@link RTMClient.logout}，SDK 登出 Agora RTM 系统成功，会触发回调 {@link RTMEvents.status}，并切换到 {@link DISCONNECTED} 状态。</li>
+     * </ul>
+     */
+    /**
+     * The SDK has logged in the Agora RTM system.
+     * <ul>
+     *     <li>If the connection between the SDK and the Agora RTM system is interrupted because of network issues, the SDK triggers the {@link RTMEvents.status} callback and switches to the {@link RECONNECTING} state.</li>
+     *     <li>If the login is banned by the server, for example, another instance has logged in with the same uid from a different device, the SDK triggers the {@link RTMEvents.status} callback and switches to the {@link FAILED} state.</li>
+     *     <li>If the app calls the {@link RTMClient.logout} method and the SDK successfully logs out of the Agora RTM system, the SDK triggers the {@link RTMEvents.status} callback and switches to the {@link DISCONNECTED} state.</li>
+     * </ul>
+     */
+    | 'RECONNECTING'
+    /** @zh-cn
+     * SDK 正在重新登录 Agora RTM 系统。
+     *
+     * <ul>
+     *     <li>如果 SDK 重新登录 Agora RTM 系统成功，会触发回调 {@link RTMEvents.status}，并切换到 {@link CONNECTED} 状态。</li>
+     *     <li>如果 SDK 重新登录 Agora RTM 系统失败，会保持  {@link RECONNECTING} 状态。</li>
+     *     <li>如果登录被服务器拒绝，SDK 会触发回调 {@link RTMEvents.status}，并切换到 {@link FAILED} 状态。</li>
+     * </ul>
+     *
+     */
+    /**
+     * The SDK keeps logging in the Agora RTM system.
+     * <ul>
+     *     <li>If the SDK successfully logs in the Agora RTM system again, it triggers the {@link  RTMEvents.status} callback and switches to the {@link CONNECTED} state.</li>
+     *     <li>If the SDK fails to log in the Agora RTM system again, the SDK stays in the {@link RECONNECTING} state. </li>
+     *     <li>If the login is rejected by the server, the SDK triggers the {@link  RTMEvents.status} callback and switches to the {@link FAILED} state.</li>
+     * </ul>
+     */
+    | 'CONNECTED'
+    /** @zh-cn
+     * SDK 停止登录 Agora RTM 系统。
+     *
+     * <p>原因可能为：</p>
+     * <p><ul>
+     * <li>另一实例已经以同一用户 ID 登录 Agora RTM 系统。</li>
+     * <li>token 已过期。</li></ul></p>
+     * 请在调用方法 {@link RTMClient.logout} 后，调用方法 {@link RTMClient.login} 登录 Agora RTM 系统。</p>
+     */
+    /**
+     * The SDK gives up logging in the Agora RTM system, possibly because another instance has logged in the Agora RTM system with the same uid.
+     *
+     * <p>Call the {@link RTMClient.logout} method before calling the {@link RTMClient.login} method to log in the Agora RTM system again.</p>
+     */
+    | 'FAILED';
 /** @zh-cn
  * 消息类型。
  */
@@ -311,54 +313,55 @@ declare enum AreaCode {
 }
 type EncryptionMode = 'NONE' | 'AES_128_GCM' | 'AES_256_GCM';
 type StorageType = 'NONE' | 'USER' | 'CHANNEL';
-type PresenceEventType = 
-/**
- * 0: The presence none of this channel
- */
-'NONE'
-/**
- * 1: The presence snapshot of this channel
- */
- | 'SNAPSHOT'
-/**
- * 2: The presence event triggered in interval mode
- */
- | 'INTERVAL'
-/**
- * 3: Triggered when remote user join channel
- */
- | 'REMOTE_JOIN'
-/**
- * 4: Triggered when remote user leave channel
- */
- | 'REMOTE_LEAVE'
-/**
- * 5: Triggered when remote user's connection timeout
- */
- | 'REMOTE_TIMEOUT'
-/**
- * 5: Triggered when user changed state
- */
- | 'REMOTE_STATE_CHANGED'
-/**
- * 6: Triggered when user joined channel without presence service
- */
- | 'ERROR_OUT_OF_SERVICE';
+type PresenceEventType =
+    /**
+     * 0: The presence none of this channel
+     */
+    'NONE'
+    /**
+     * 1: The presence snapshot of this channel
+     */
+    | 'SNAPSHOT'
+    /**
+     * 2: The presence event triggered in interval mode
+     */
+    | 'INTERVAL'
+    /**
+     * 3: Triggered when remote user join channel
+     */
+    | 'REMOTE_JOIN'
+    /**
+     * 4: Triggered when remote user leave channel
+     */
+    | 'REMOTE_LEAVE'
+    /**
+     * 5: Triggered when remote user's connection timeout
+     */
+    | 'REMOTE_TIMEOUT'
+    /**
+     * 5: Triggered when user changed state
+     */
+    | 'REMOTE_STATE_CHANGED'
+    /**
+     * 6: Triggered when user joined channel without presence service
+     */
+    | 'ERROR_OUT_OF_SERVICE';
 type TopicEventType = 'NONE'
-/**
- * REMOTE_JOIN_TOPIC: Triggered when remote user join a topic
- */
- | 'REMOTE_JOIN'
-/**
- * REMOTE_LEAVE_TOPIC: Triggered when remote user leave a topic
- */
- | 'REMOTE_LEAVE'
-/**
- * REMOTE_SNAPSHOT: The topic snapshot of this channel
- */
- | 'SNAPSHOT';
+    /**
+     * REMOTE_JOIN_TOPIC: Triggered when remote user join a topic
+     */
+    | 'REMOTE_JOIN'
+    /**
+     * REMOTE_LEAVE_TOPIC: Triggered when remote user leave a topic
+     */
+    | 'REMOTE_LEAVE'
+    /**
+     * REMOTE_SNAPSHOT: The topic snapshot of this channel
+     */
+    | 'SNAPSHOT';
 type StorageEventType = 'NONE' | 'SET' | 'SNAPSHOT' | 'REMOVE' | 'UPDATE';
 type LockEventType = 'NONE' | 'SET' | 'REMOVED' | 'ACQUIRED' | 'RELEASED' | 'SNAPSHOT' | 'EXPIRED';
+type TokenEventType = 'WILL_EXPIRE' | 'READ_PERMISSION_REVOKED';
 declare enum LinkStateChangeReason4Report {
     /** * Unknown reason. */ UNKNOWN = 0,
     /** * Login. */ LOGIN = 1,
@@ -439,6 +442,10 @@ declare enum LinkStateChangeReasonDescription {
     LOCK_NOT_AVAILABLE = "Lock service is not available",
     LOGIN_TOO_FREQUENT = "Login too frequent"
 }
+declare enum TokenEventReason {
+    WILL_EXPIRE = "The token is about to expire",
+    READ_PERMISSION_REVOKED = "The token read permission is revoked"
+}
 declare enum ChannelTypeEnum {
     MESSAGE = 1,
     STREAM = 2,
@@ -449,8 +456,6 @@ type ConstantsType_AreaCode = AreaCode;
 declare const ConstantsType_AreaCode: typeof AreaCode;
 type ConstantsType_ChannelTypeEnum = ChannelTypeEnum;
 declare const ConstantsType_ChannelTypeEnum: typeof ChannelTypeEnum;
-type ConstantsType_ConnectionChangeReason = ConnectionChangeReason;
-type ConstantsType_ConnectionState = ConnectionState;
 type ConstantsType_EncryptionMode = EncryptionMode;
 type ConstantsType_LegacyAreaCode = LegacyAreaCode;
 declare const ConstantsType_LegacyAreaCode: typeof LegacyAreaCode;
@@ -462,11 +467,17 @@ type ConstantsType_LockEventType = LockEventType;
 type ConstantsType_MessageType = MessageType;
 declare const ConstantsType_MessageType: typeof MessageType;
 type ConstantsType_PresenceEventType = PresenceEventType;
+type ConstantsType_RTMConnectionChangeReason = RTMConnectionChangeReason;
+type ConstantsType_RTMConnectionState = RTMConnectionState;
 type ConstantsType_StorageEventType = StorageEventType;
 type ConstantsType_StorageType = StorageType;
+type ConstantsType_TokenEventReason = TokenEventReason;
+declare const ConstantsType_TokenEventReason: typeof TokenEventReason;
+type ConstantsType_TokenEventType = TokenEventType;
 type ConstantsType_TopicEventType = TopicEventType;
 declare namespace ConstantsType {
-  export { ConstantsType_AreaCode as AreaCode, ConstantsType_ChannelTypeEnum as ChannelTypeEnum, type ConstantsType_ConnectionChangeReason as ConnectionChangeReason, type ConstantsType_ConnectionState as ConnectionState, type ConstantsType_EncryptionMode as EncryptionMode, ConstantsType_LegacyAreaCode as LegacyAreaCode, ConstantsType_LinkStateChangeReason4Report as LinkStateChangeReason4Report, ConstantsType_LinkStateChangeReasonDescription as LinkStateChangeReasonDescription, type ConstantsType_LockEventType as LockEventType, ConstantsType_MessageType as MessageType, type ConstantsType_PresenceEventType as PresenceEventType, type ConstantsType_StorageEventType as StorageEventType, type ConstantsType_StorageType as StorageType, type ConstantsType_TopicEventType as TopicEventType };
+    export { ConstantsType_AreaCode as AreaCode, ConstantsType_ChannelTypeEnum as ChannelTypeEnum, ConstantsType_LegacyAreaCode as LegacyAreaCode, ConstantsType_LinkStateChangeReason4Report as LinkStateChangeReason4Report, ConstantsType_LinkStateChangeReasonDescription as LinkStateChangeReasonDescription, ConstantsType_MessageType as MessageType, ConstantsType_TokenEventReason as TokenEventReason };
+    export type { ConstantsType_EncryptionMode as EncryptionMode, ConstantsType_LockEventType as LockEventType, ConstantsType_PresenceEventType as PresenceEventType, ConstantsType_RTMConnectionChangeReason as RTMConnectionChangeReason, ConstantsType_RTMConnectionState as RTMConnectionState, ConstantsType_StorageEventType as StorageEventType, ConstantsType_StorageType as StorageType, ConstantsType_TokenEventType as TokenEventType, ConstantsType_TopicEventType as TopicEventType };
 }
 
 declare function setArea({ areaCodes, excludedArea, }: {
@@ -503,12 +514,7 @@ type ChannelType = 'STREAM' | 'MESSAGE' | 'USER';
 type ServiceType = 'MESSAGE' | 'STREAM';
 
 interface ILogger {
-    info: IDebugger;
-    warn: IDebugger;
-    logError: IDebugger;
     loggerId: number;
-    genTracker: (type: TrackType) => (formatter: any, ...args: any[]) => void;
-    genLogger: (prefix: string, customPrefix?: string) => (formatter: any, ...args: any[]) => void;
 }
 declare class EventBase<T = {}> extends EventEmitter {
     logError: IDebugger;
@@ -525,84 +531,6 @@ declare class EventBase<T = {}> extends EventEmitter {
     readonly name: string;
     constructor(logger: ILogger, name: string, trackEmit?: boolean, banOriginEventListener?: boolean);
 }
-type TrackType = 'Invoke' | 'Result' | 'Event' | 'Error';
-
-/**
- * Reason for the disconnection.
- */
-declare enum ConnectionDisconnectedReason {
-    /**
-     * The user has left the channel.
-     */
-    LEAVE = "LEAVE",
-    /**
-     * The network is down, and cannot recover after retry.
-     */
-    NETWORK_ERROR = "NETWORK_ERROR",
-    /**
-     * The server returns an error. This is usually caused by incorrect parameter settings.
-     */
-    SERVER_ERROR = "SERVER_ERROR",
-    /**
-     * The user is banned.
-     */
-    UID_BANNED = "UID_BANNED",
-    /**
-     * @ignore
-     */
-    FALLBACK = "FALLBACK",
-    /**
-     * The IP is banned.
-     */
-    IP_BANNED = "IP_BANNED",
-    /**
-     * The channel is banned.
-     */
-    CHANNEL_BANNED = "CHANNEL_BANNED",
-    /**
-     * @ignore
-     */
-    LICENSE_MISSING = "LICENSE_MISSING",
-    /**
-     * @ignore
-     */
-    LICENSE_EXPIRED = "LICENSE_EXPIRED",
-    /**
-     * @ignore
-     */
-    LICENSE_MINUTES_EXCEEDED = "LICENSE_MINUTES_EXCEEDED",
-    /**
-     * @ignore
-     */
-    LICENSE_PERIOD_INVALID = "LICENSE_PERIOD_INVALID",
-    /**
-     * @ignore
-     */
-    LICENSE_MULTIPLE_SDK_SERVICE = "LICENSE_MULTIPLE_SDK_SERVICE",
-    /**
-     * @ignore
-     */
-    LICENSE_ILLEGAL = "LICENSE_ILLEGAL",
-    /**
-     * The user's token expires.
-     */
-    TOKEN_EXPIRE = "TOKEN_EXPIRE"
-}
-/**
- * Connection state between the SDK and Agora's edge server.
- *
- * You can get the connection state through [connectionState]{@link RTMEvents.status}.
- *
- * The connection between the SDK and the edge server has the following states:
- * - `"DISCONNECTED"`: The SDK is disconnected from the server.
- *  - This is the initial state until you call [join]{@link StreamChannel.join}.
- *  - The SDK also enters this state after you call [leave]{@link StreamChannel.leave}, when the user is banned, or when the connection fails.
- * - `"CONNECTING"`: The SDK is connecting to the server. The SDK enters this state when you call [join]{@link StreamChannel.join}.
- * - `"CONNECTED"`: The SDK is connected to the server and joins a channel. The user can now publish streams or subscribe to streams in the channel.
- * - `"RECONNECTING"`: The SDK is reconnecting to the server. If the connection is lost because the network is down or switched, the SDK enters this state.
- * - `"DISCONNECTING"`: The SDK is disconnecting from the server. The SDK enters this state when you call [leave]{@link StreamChannel.leave}.
- */
-declare type ConnectionState$1 = 'DISCONNECTED' | 'CONNECTING' | 'RECONNECTING' | 'CONNECTED' | 'DISCONNECTING';
 
 interface LockDetail {
     /**@zh-cn
@@ -1304,6 +1232,17 @@ declare class RTMStorage {
 }
 
 declare namespace RTMEvents {
+    type BaseEvent = {
+        /**
+         * Used for calibrating time
+         * Sample Code:
+         * ```javascript
+         * const msOffset = timestamp - new Date().getTime(); // received every event need to calibrate time
+         * const now = new Date().getTime() + msOffset; // Use the calibrated time as the current time
+         * ```
+         */
+        timestamp: number;
+    };
     interface PublishInfo {
         /**
          * The publisher user ID
@@ -1367,7 +1306,7 @@ declare namespace RTMEvents {
          */
         userStateList: UserState[];
     }
-    interface PresenceEvent {
+    interface PresenceEvent extends BaseEvent {
         eventType: PresenceEventType;
         channelType: ChannelType;
         channelName: string;
@@ -1375,20 +1314,17 @@ declare namespace RTMEvents {
         stateChanged: StateDetail;
         interval: IntervalDetail | null;
         snapshot: UserState[] | null;
-        timestamp: number;
     }
-    interface StreamChannelConnectionStatusChangeEvent {
+    interface StreamChannelConnectionStatusChangeEvent extends BaseEvent {
         channelName: string;
-        state: ConnectionState$1;
-        reason: ConnectionDisconnectedReason | string;
-        timestamp: number;
-    }
-    interface RTMConnectionStatusChangeEvent {
         state: ConnectionState;
-        reason: ConnectionChangeReason;
-        timestamp: number;
+        reason: ConnectionDisconnectedReason | string;
     }
-    interface MessageEvent {
+    interface RTMConnectionStatusChangeEvent extends BaseEvent {
+        state: RTMConnectionState;
+        reason: RTMConnectionChangeReason;
+    }
+    interface MessageEvent extends BaseEvent {
         channelType: ChannelType;
         channelName: string;
         topicName: string;
@@ -1397,18 +1333,16 @@ declare namespace RTMEvents {
         message: string | Uint8Array;
         publisher: string;
         publishTime?: number;
-        timestamp: number;
     }
-    interface StorageEvent {
+    interface StorageEvent extends BaseEvent {
         channelType: ChannelType;
         channelName: string;
         publisher: string;
         storageType: StorageType;
         eventType: StorageEventType;
         data: StorageData;
-        timestamp: number;
     }
-    interface LockEvent {
+    interface LockEvent extends BaseEvent {
         channelType: ChannelType;
         channelName: string;
         eventType: LockEventType;
@@ -1417,9 +1351,8 @@ declare namespace RTMEvents {
         publisher: string;
         snapshot: LockDetail[];
         owner: string;
-        timestamp: number;
     }
-    interface TopicEvent {
+    interface TopicEvent extends BaseEvent {
         /**
          * Indicate topic event type
          */
@@ -1440,12 +1373,11 @@ declare namespace RTMEvents {
          * The count of topicInfos.
          */
         totalTopics: number;
-        timestamp: number;
     }
     type LinkOperation = 'LOGIN' | 'LOGOUT' | 'JOIN' | 'LEAVE' | 'SERVER_REJECT' | 'AUTO_RECONNECT' | 'RECONNECTED' | 'HEARTBEAT_TIMEOUT' | 'SERVER_TIMEOUT' | 'NETWORK_CHANGE';
     type LinkState = 'IDLE' | 'CONNECTING' | 'CONNECTED' | 'DISCONNECTED' | 'SUSPENDED' | 'FAILED';
     type LinkStateChangeReasonCode = 'UNKNOWN' | 'LOGIN' | 'LOGIN_SUCCESS' | 'LOGIN_TIMEOUT' | 'LOGIN_NOT_AUTHORIZED' | 'LOGIN_REJECTED' | 'RELOGIN' | 'LOGOUT' | 'AUTO_RECONNECT' | 'RECONNECT_TIMEOUT' | 'RECONNECT_SUCCESS' | 'JOIN' | 'JOIN_SUCCESS' | 'JOIN_FAILED' | 'REJOIN' | 'LEAVE' | 'INVALID_TOKEN' | 'TOKEN_EXPIRED' | 'INCONSISTENT_APP_ID' | 'INVALID_CHANNEL_NAME' | 'INVALID_USER_ID' | 'NOT_INITIALIZED' | 'RTM_SERVICE_NOT_CONNECTED' | 'CHANNEL_INSTANCE_EXCEED_LIMITATION' | 'OPERATION_RATE_EXCEED_LIMITATION' | 'CHANNEL_IN_ERROR_STATE' | 'PRESENCE_NOT_CONNECTED' | 'SAME_UID_LOGIN' | 'KICKED_OUT_BY_SERVER' | 'KEEP_ALIVE_TIMEOUT' | 'CONNECTION_ERROR' | 'PRESENCE_NOT_READY' | 'NETWORK_CHANGE' | 'SERVICE_NOT_SUPPORTED' | 'STREAM_CHANNEL_NOT_AVAILABLE' | 'STORAGE_NOT_AVAILABLE' | 'LOCK_NOT_AVAILABLE' | 'LOGIN_TOO_FREQUENT';
-    interface LinkStateEvent {
+    interface LinkStateEvent extends BaseEvent {
         currentState: LinkState;
         previousState: LinkState;
         serviceType: ServiceType;
@@ -1455,7 +1387,13 @@ declare namespace RTMEvents {
         affectedChannels: string[];
         unrestoredChannels: string[];
         isResumed: boolean;
-        timestamp: number;
+    }
+    interface TokenEvent extends BaseEvent {
+        eventType: TokenEventType;
+        reason: string;
+        affectedResources: {
+            messageChannels: string[];
+        };
     }
     interface RTMClientEventMap {
         /** @zh-cn
@@ -1488,6 +1426,7 @@ declare namespace RTMEvents {
          */
         tokenPrivilegeWillExpire: (channelName: string) => void;
         linkState: (linkState: LinkStateEvent) => void;
+        token: (tokenEvent: TokenEvent) => void;
     }
 }
 
@@ -2015,47 +1954,47 @@ interface RenewTokenOptions {
 }
 declare class RTMClient extends EventBase<RTMEvents.RTMClientEventMap> {
     constructor(
-    /**@zh-cn
-     * 传入项目的 App ID。必须是 ASCII 编码，长度为 32 个字符。
-     */
-    /**
-     * Pass in the project's App ID. Must be ASCII encoded and 32 characters long.
-     */
-    appId: string, 
-    /**@zh-cn
-     * 登录 Agora RTM 系统的用户 ID。该字符串不可超过 64 字节。以下为支持的字符集范围:<ul>
-     * <li>26 个小写英文字母 a-z</li>
-     * <li>26 个大写英文字母 A-Z</li>
-     * <li>10 个数字 0-9</li>
-     * <li>空格</li>
-     * <li>"!", "#", "$", "%", "&", "(", ")", "+", "-", ":", ";", "<", "=", ".", ">", "?", "@", "[", "]", "^", "_", " {", "}", "|", "~", ","</li>
-     * </ul>
-     * <p><b>Note</b></p><ul>
-     * <li>请不要将 uid 设为空、null，或字符串 "null"。</li>
-     * <li>uid 不支持 <code>number</code> 类型。建议调用 <code>toString()</code> 方法转化非 string 型 uid。</li>
-     * </ul>
-     */
-    /**
-     * The uid of the user logging in the Agora RTM system. The string length must be less than 64 bytes with the following character scope:<ul>
-     * <li>All lowercase English letters: a to z</li>
-     * <li>All uppercase English letters: A to Z</li>
-     * <li>All numeric characters: 0 to 9</li>
-     * <li>The space character.</li>
-     * <li>Punctuation characters and other symbols, including: "!", "#", "$", "%", "&", "(", ")", "+", "-", ":", ";", "<", "=", ".", ">", "?", "@", "[", "]", "^", "_", " {", "}", "|", "~", ","</li>
-     * </ul>
-     * <p><b>Note</b></p><ul>
-     * <li>The uid cannot be empty, or set as null or "null".</li>
-     * <li>We do not support uids of the <code>number</code> type and recommend using the <code>toString()</code> method to convert your non-string uid.</li>
-     * </ul>
-     */
-    userId: string, 
-    /**@zh-cn
-     * 可选参数。
-     */
-    /**
-     * Optional parameter. See {@link RTMConfig}
-     */
-    rtmConfig?: RTMConfig);
+        /**@zh-cn
+         * 传入项目的 App ID。必须是 ASCII 编码，长度为 32 个字符。
+         */
+        /**
+         * Pass in the project's App ID. Must be ASCII encoded and 32 characters long.
+         */
+        appId: string,
+        /**@zh-cn
+         * 登录 Agora RTM 系统的用户 ID。该字符串不可超过 64 字节。以下为支持的字符集范围:<ul>
+         * <li>26 个小写英文字母 a-z</li>
+         * <li>26 个大写英文字母 A-Z</li>
+         * <li>10 个数字 0-9</li>
+         * <li>空格</li>
+         * <li>"!", "#", "$", "%", "&", "(", ")", "+", "-", ":", ";", "<", "=", ".", ">", "?", "@", "[", "]", "^", "_", " {", "}", "|", "~", ","</li>
+         * </ul>
+         * <p><b>Note</b></p><ul>
+         * <li>请不要将 uid 设为空、null，或字符串 "null"。</li>
+         * <li>uid 不支持 <code>number</code> 类型。建议调用 <code>toString()</code> 方法转化非 string 型 uid。</li>
+         * </ul>
+         */
+        /**
+         * The uid of the user logging in the Agora RTM system. The string length must be less than 64 bytes with the following character scope:<ul>
+         * <li>All lowercase English letters: a to z</li>
+         * <li>All uppercase English letters: A to Z</li>
+         * <li>All numeric characters: 0 to 9</li>
+         * <li>The space character.</li>
+         * <li>Punctuation characters and other symbols, including: "!", "#", "$", "%", "&", "(", ")", "+", "-", ":", ";", "<", "=", ".", ">", "?", "@", "[", "]", "^", "_", " {", "}", "|", "~", ","</li>
+         * </ul>
+         * <p><b>Note</b></p><ul>
+         * <li>The uid cannot be empty, or set as null or "null".</li>
+         * <li>We do not support uids of the <code>number</code> type and recommend using the <code>toString()</code> method to convert your non-string uid.</li>
+         * </ul>
+         */
+        userId: string,
+        /**@zh-cn
+         * 可选参数。
+         */
+        /**
+         * Optional parameter. See {@link RTMConfig}
+         */
+        rtmConfig?: RTMConfig);
     presence: RTMPresence;
     history: RTMHistory;
     /**@zh-cn
@@ -2223,18 +2162,6 @@ interface ErrorInfo {
     errorCode: number;
 }
 
-declare class StreamChannel extends EventBase implements RTMStreamChannel {
-    join(options?: JoinOptions): Promise<JoinChannelResponse>;
-    renewStreamChannelToken(token: string): Promise<void>;
-    leave(): Promise<LeaveChannelResponse>;
-    joinTopic(topicName: string, options?: joinTopicOptions): Promise<JoinTopicResponse>;
-    publishTopicMessage(topicName: string, message: string | Uint8Array, options?: PublishTopicMessageOptions): Promise<PublishTopicMessageResponse>;
-    leaveTopic(topicName: string): Promise<LeaveTopicResponse>;
-    subscribeTopic(topicName: string, options?: SubscribeTopicOptions): Promise<SubscribeTopicResponse>;
-    unsubscribeTopic(topicName: string, options?: UnsubscribeTopicOptions): Promise<UnsubscribeTopicResponse>;
-    getSubscribedUserList(topicName: string): GetSubscribedUserListResponse;
-}
-
 interface IErrorInfo {
     code?: number;
     serverCode?: number;
@@ -2251,7 +2178,7 @@ declare class RTMBaseError extends Error implements ErrorInfo {
     constructor(operation: string, args?: string | readonly [string, ...any[]], errorInfo?: IErrorInfo | string | number);
 }
 
-declare interface IAgoraRTM {
+interface IAgoraRTM {
     /** @zh-cn
      * Agora RTM SDK 的编译信息。
      */
@@ -2260,7 +2187,7 @@ declare interface IAgoraRTM {
      * @example `AgoraRTM.BUILD`
      */
     BUILD: string;
-    RTM: RTMClient;
+    RTM: typeof RTMClient;
     /** @zh-cn
      * Agora RTM SDK 的版本号。
      */
@@ -2269,8 +2196,7 @@ declare interface IAgoraRTM {
      * @example `AgoraRTM.VERSION`
      */
     VERSION: string;
-    processId: string;
-    setArea({ areaCodes, excludedArea, }: {
+    setArea(options: {
         areaCodes: AreaCode[];
         excludedArea?: AreaCode;
     }): void;
@@ -2313,6 +2239,18 @@ declare class RStorage extends EventBase implements RTMStorage {
     unsubscribeUserMetadata(userId: string): Promise<UnsubscribeUserMetaResponse>;
 }
 
+declare class StreamChannel extends EventBase implements RTMStreamChannel {
+    join(options?: JoinOptions): Promise<JoinChannelResponse>;
+    renewStreamChannelToken(token: string): Promise<void>;
+    leave(): Promise<LeaveChannelResponse>;
+    joinTopic(topicName: string, options?: joinTopicOptions): Promise<JoinTopicResponse>;
+    publishTopicMessage(topicName: string, message: string | Uint8Array, options?: PublishTopicMessageOptions): Promise<PublishTopicMessageResponse>;
+    leaveTopic(topicName: string): Promise<LeaveTopicResponse>;
+    subscribeTopic(topicName: string, options?: SubscribeTopicOptions): Promise<SubscribeTopicResponse>;
+    unsubscribeTopic(topicName: string, options?: UnsubscribeTopicOptions): Promise<UnsubscribeTopicResponse>;
+    getSubscribedUserList(topicName: string): GetSubscribedUserListResponse;
+}
+
 declare class RTM extends EventBase<RTMEvents.RTMClientEventMap> implements RTMClient {
     presence: Presence;
     storage: RStorage;
@@ -2336,7 +2274,6 @@ declare class RTM extends EventBase<RTMEvents.RTMClientEventMap> implements RTMC
 declare const _default: {
     BUILD: string;
     VERSION: string;
-    processId: string;
     RTM: typeof RTM;
     getParameter: (key: any) => any;
     setArea: typeof setArea;
@@ -2345,4 +2282,5 @@ declare const _default: {
     RTMBaseError: typeof RTMBaseError;
 };
 
-export { type AcquireLockOptions, type AcquireLockResponse, type BaseResponse, type ChannelDetail, type ChannelMetadataOperationResponse, type ChannelType, ConstantsType, type ErrorInfo, type GetChannelMetadataResponse, type GetHistoryMessageOptions, type GetLockResponse, type GetMessagesResponse, type GetOnlineUsersOptions, type GetOnlineUsersResponse, type GetStateResponse, type GetSubscribedUserListResponse, type GetUserChannelsResponse, type GetUserMetadataOptions, type GetUserMetadataResponse, type HistoryChannelType, type HistoryMessage, type IAgoraRTM, type IErrorInfo, type JoinChannelResponse, type JoinOptions, type JoinTopicResponse, type LeaveChannelResponse, type LeaveTopicResponse, type LockDetail, type LockOperationResponse, type LoginResponse, type LogoutResponse, type MetaDataDetail, type MetadataItem, type MetadataOptions, type OccupancyDetail, type PrivateConfig, type PublishOptions, type PublishResponse, type PublishTopicMessageOptions, type PublishTopicMessageResponse, RTMBaseError, RTMClient, type RTMConfig, RTMEvents, RTMHistory, RTMLock, type RTMOperationResponse, RTMPresence, RTMStorage, RTMStreamChannel, RTMStreamChannelStatusCode, type ReleaseLockResponse, type RemoveChannelMetadataOptions, type RemoveChannelMetadataResponse, type RemoveLockResponse, type RemoveStateOptions, type RemoveStateResponse, type RemoveUserMetadataOptions, type RemoveUserMetadataResponse, type RenewTokenOptions, type RenewTokenResponse, type RevokeLockResponse, type ServiceType, type SetChannelMetadataResponse, type SetLockOptions, type SetLockResponse, type SetOrUpdateUserMetadataOptions, type SetStateResponse, type SetUserMetadataResponse, type StateDetail, type StorageData, type StreamChannelOperationResponse, type SubscribeOptions, type SubscribeResponse, type SubscribeTopicOptions, type SubscribeTopicResponse, type SubscribeUserMetaResponse, type SubscribedFailedReason, type UnsubscribeResponse, type UnsubscribeTopicOptions, type UnsubscribeTopicResponse, type UnsubscribeUserMetaResponse, type UpdateChannelMetadataResponse, type UpdateConfigResponse, type UpdateUserMetadataResponse, type UserMetadataOperationResponse, type WhereNowResponse, type WhoNowOptions, type WhoNowResponse, _default as default, type joinTopicOptions };
+export { ConstantsType, RTMBaseError, RTMClient, RTMEvents, RTMHistory, RTMLock, RTMPresence, RTMStorage, RTMStreamChannel, RTMStreamChannelStatusCode, _default as default };
+export type { AcquireLockOptions, AcquireLockResponse, BaseResponse, ChannelDetail, ChannelMetadataOperationResponse, ChannelType, ErrorInfo, GetChannelMetadataResponse, GetHistoryMessageOptions, GetLockResponse, GetMessagesResponse, GetOnlineUsersOptions, GetOnlineUsersResponse, GetStateResponse, GetSubscribedUserListResponse, GetUserChannelsResponse, GetUserMetadataOptions, GetUserMetadataResponse, HistoryChannelType, HistoryMessage, IAgoraRTM, IErrorInfo, JoinChannelResponse, JoinOptions, JoinTopicResponse, LeaveChannelResponse, LeaveTopicResponse, LockDetail, LockOperationResponse, LoginResponse, LogoutResponse, MetaDataDetail, MetadataItem, MetadataOptions, OccupancyDetail, PrivateConfig, PublishOptions, PublishResponse, PublishTopicMessageOptions, PublishTopicMessageResponse, RTMConfig, RTMOperationResponse, ReleaseLockResponse, RemoveChannelMetadataOptions, RemoveChannelMetadataResponse, RemoveLockResponse, RemoveStateOptions, RemoveStateResponse, RemoveUserMetadataOptions, RemoveUserMetadataResponse, RenewTokenOptions, RenewTokenResponse, RevokeLockResponse, ServiceType, SetChannelMetadataResponse, SetLockOptions, SetLockResponse, SetOrUpdateUserMetadataOptions, SetStateResponse, SetUserMetadataResponse, StateDetail, StorageData, StreamChannelOperationResponse, SubscribeOptions, SubscribeResponse, SubscribeTopicOptions, SubscribeTopicResponse, SubscribeUserMetaResponse, SubscribedFailedReason, UnsubscribeResponse, UnsubscribeTopicOptions, UnsubscribeTopicResponse, UnsubscribeUserMetaResponse, UpdateChannelMetadataResponse, UpdateConfigResponse, UpdateUserMetadataResponse, UserMetadataOperationResponse, WhereNowResponse, WhoNowOptions, WhoNowResponse, joinTopicOptions };
