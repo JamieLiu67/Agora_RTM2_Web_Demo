@@ -38,7 +38,7 @@
 ## 主要文件说明
 - `index.html`：主页面结构与样式，分区清晰，所有输入/按钮/展示区齐全。
 - `script.js`：核心逻辑，负责 RTM 初始化、事件监听、消息/用户/日志展示、交互处理、呼叫邀请弹窗与音效、查询用户在线功能。
-- `Agora_RTM_for_Web/libs/agora-rtm-2.2.2.min.js`：Agora RTM 2.x SDK（本地离线版）。
+- `Agora_RTM_for_Web/libs/agora-rtm-2.2.3.min.js`：Agora RTM 2.x SDK（本地离线版）。
 - `music/`：呼叫邀请相关音效（calling.mp3、becalled.mp3、accept.mp3、deny.mp3），请自行替换为合适音频。
 
 ## Token 更新功能说明
@@ -68,7 +68,7 @@
 3. 稍等片刻，即可通过 GitHub Pages 链接访问 Demo。
 
 ## 常见问题
-- SDK 加载失败：请确保 `agora-rtm-2.2.2.min.js` 路径正确，且在 `script.js` 之前加载。
+- SDK 加载失败：请确保 `agora-rtm-2.2.3.min.js` 路径正确，且在 `script.js` 之前加载。
 - Token 可选：测试环境可留空，生产环境需填写有效 Token。
 - Token 过期：当 Token 即将过期时，系统会自动提醒，请及时使用"更新 Token"功能刷新 Token。
 - 频道用户列表为空：请先订阅频道并确保有用户在线。
