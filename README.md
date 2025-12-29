@@ -27,7 +27,7 @@
 
 ## 快速开始
 1. 克隆或下载本项目到本地。
-2. 确保 `Agora_RTM_for_Web/libs/agora-rtm-2.2.2.min.js` 文件存在。
+2. 确保 `Agora_RTM_for_Web/libs/agora-rtm-2.2.3.min.js` 文件存在。
 3. 启动本地静态服务器（推荐 Python）：
    ```sh
    python3 -m http.server 8080
